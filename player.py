@@ -1,4 +1,5 @@
 import numpy as np
+import pygame
 
 
 class HockeyPlayer:
@@ -7,23 +8,39 @@ class HockeyPlayer:
         1. no calls to the pystk library (your code will not run on the tournament system if you do)
         2. There needs to be a deep network somewhere in the loop
         3. You code must run in 100 ms / frame on a standard desktop CPU (no for testing GPU)
-        
+
         Try to minimize library dependencies, nothing that does not install through pip on linux.
     """
-    
+
     """
        You may request to play with a different kart.
        Call `python3 -c "import pystk; pystk.init(pystk.GraphicsConfig.ld()); print(pystk.list_karts())"` to see all values.
     """
     kart = ""
-    
+
     def __init__(self, player_id = 0):
         """
         Set up a soccer player.
         The player_id starts at 0 and increases by one for each player added. You can use the player id to figure out your team (player_id % 2), or assign different roles to different agents.
         """
-        pass
-        
+        self.manual = True
+
+    def manual_actions(self):
+        accel = 0
+        brake = False
+        steer = 0
+        key = pygame.key.get_pressed()
+        if key[pygame.K_LEFT]:
+            steer -= 1
+        if key[pygame.K_RIGHT]:
+            steer += 1
+        if key[pygame.K_UP]:
+            accel = 1
+        if key[pygame.K_DOWN]:
+            brake = True
+
+        return accel, brake, steer
+
     def act(self, image, player_info):
         """
         Set the action given the current image
@@ -31,10 +48,12 @@ class HockeyPlayer:
         :param player_info: pystk.Player object for the current kart.
         return: Dict describing the action
         """
-        action = {'acceleration': 0, 'brake': False, 'drift': False, 'nitro': False, 'rescue': False, 'steer': 0}
+        if self.manual:
+            accel, brake, steer = self.manual_actions()
+
+        action = {'acceleration': accel, 'brake': brake, 'drift': False, 'nitro': False, 'rescue': False, 'steer': steer}
         """
         Your code here.
         """
 
         return action
-

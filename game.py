@@ -10,28 +10,32 @@ class Player:
     @property
     def config(self):
         return pystk.PlayerConfig(controller=pystk.PlayerConfig.Controller.PLAYER_CONTROL, kart=self.player.kart, team=self.team)
-    
+
     def __call__(self, image, player_info):
         return self.player.act(image, player_info)
 
 
 class Tournament:
 
-    def __init__(self, players, track='icy_soccer_field'):
+    def __init__(self, players, screen, track='icy_soccer_field'):
 
         self.race_config = pystk.RaceConfig(num_kart=len(players), track=track, mode=pystk.RaceConfig.RaceMode.SOCCER)
         self.race_config.players.pop()
-        
+
         self.active_players = []
         for p in players:
             if p is not None:
                 self.race_config.players.append(p.config)
                 self.active_players.append(p)
-        
+
         self.k = pystk.Race(self.race_config)
 
         self.k.start()
         self.k.step()
+
+        self.screen = screen
+        # self.clock = pygame.time.Clock()
+        # self.dt = self.clock.tick(30) / 1000.0
 
     def play(self, save=None, max_frames=50):
         state = pystk.WorldState()
@@ -42,6 +46,11 @@ class Tournament:
                 os.makedirs(save)
 
         for t in range(max_frames):
+            if event.type == pygame.QUIT:
+                return
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+                pygame.quit()
+
             print('\rframe %d' % t, end='\r')
 
             state.update()
@@ -50,12 +59,14 @@ class Tournament:
             for i, p in enumerate(self.active_players):
                 player = state.players[i]
                 image = np.array(self.k.render_data[i].image)
-                
+                if i == 0:
+                    self.screen.blit(image)
+
                 action = pystk.Action()
                 player_action = p(image, player)
                 for a in player_action:
                     setattr(action, a, player_action[a])
-                
+
                 list_actions.append(action)
 
                 if save is not None:
